@@ -12,7 +12,8 @@ public class GenerativeParserFactory implements ParserFactory {
 	
 	public Parser getParser(List<Tree<String>> trainTrees) {
 
-		 return new BaselineParser(trainTrees);
+//		 return new BaselineParser(trainTrees);
+		return new CKYNaiveParser(trainTrees);
 	}
 
 }
