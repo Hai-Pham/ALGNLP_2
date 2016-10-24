@@ -34,12 +34,14 @@ public class CKYNaiveParserConciseTester
 
         // Set up default parameters and settings
         String basePath = ".";
-        int maxTrainLength = 10;
-        int maxTestLength = 10;
+        int maxTrainLength = 40;
+        int maxTestLength = 40;
 
         // train and test indexes
-        int start = 219;
-        int end = 219;
+//        int start = 219;
+//        int end = 219;
+        int start = 200;
+        int end = 202;
 
         // Update defaults using command line specifications
         if (argMap.containsKey("-path")) {
@@ -61,9 +63,9 @@ public class CKYNaiveParserConciseTester
         System.out.print("Loading training trees  ... ");
         List<Tree<String>> trainTrees = readTrees(basePath, start, end, maxTrainLength);
         System.out.println("done. (" + trainTrees.size() + " trees)");
-        List<Tree<String>> testTrees = null;
 
         System.out.print("Loading test trees  ... ");
+        List<Tree<String>> testTrees = null;
         testTrees = readTrees(basePath, start, end, maxTestLength);
         System.out.println("done. (" + testTrees.size() + " trees)");
 
@@ -72,8 +74,8 @@ public class CKYNaiveParserConciseTester
         lexicon = parser.getLexicon();
 
         System.out.println("Doing something with HandleUnaries...");
-//        List<String> smallSentence = new ArrayList<>(Arrays.asList("Ms.", "Haag", "plays", "Elianti", "."));
-        List<String> smallSentence = new ArrayList<>(Arrays.asList("Tuesday", ",", "October", "31", ",", "1989"));
+        List<String> smallSentence = new ArrayList<>(Arrays.asList("Ms.", "Haag", "plays", "Elianti", "."));
+//        List<String> smallSentence = new ArrayList<>(Arrays.asList("Tuesday", ",", "October", "31", ",", "1989"));
         System.out.println("Small sentence as a list of string " + smallSentence);
 
         // debug lexicon and grammar
@@ -82,7 +84,9 @@ public class CKYNaiveParserConciseTester
 
 //        parser.handleUnaries(1, 3);
         parser.cky(smallSentence);
-        parser.debugScoreTablesToConsole();
+        parser.debugScoreTablesToConsole(parser.getScore());
+//        parser.debugScoreTablesToConsole(parser.getUnaryScore());
+//        parser.debugScoreTablesToConsole(parser.getBinaryScore());
         parser.debugBackPointerTablesToConsole();
 
         System.out.println("\n\n\n\n\nEVALUATING PARSER NOW ...");
