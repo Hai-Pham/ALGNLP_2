@@ -11,6 +11,8 @@ import edu.berkeley.nlp.util.Indexer;
 
 import java.util.*;
 
+import static java.lang.Double.NaN;
+
 
 public class CKYNaiveParser implements Parser
 {
@@ -22,11 +24,11 @@ public class CKYNaiveParser implements Parser
     }
 
     // List of score and back pointer tables
-    // Key of all internal HashMaps are the index of Non-Terminal Symbols
+    // Key of all internal LinkedHashMaps are the index of Non-Terminal Symbols
     // (managed by grammar's labelIndexer)
-    private static ArrayList<ArrayList<HashMap<Integer, Double>>> unaryScore, binaryScore, score;
-    private static ArrayList<ArrayList<HashMap<Integer, Integer>>> uniBackPointer;
-    private static ArrayList<ArrayList<HashMap<Integer, Triple>>> biBackPointer;
+    private static ArrayList<ArrayList<LinkedHashMap<Integer, Double>>> unaryScore, binaryScore, score;
+    private static ArrayList<ArrayList<LinkedHashMap<Integer, Integer>>> uniBackPointer;
+    private static ArrayList<ArrayList<LinkedHashMap<Integer, Triple>>> biBackPointer;
     private static UnaryClosure unaryClosure;
 
     Lexicon lexicon;
@@ -45,6 +47,10 @@ public class CKYNaiveParser implements Parser
      */
     public Tree<String> getBestParse(List<String> sentence) {
         cky(sentence);
+
+        if (unaryScore.get(0).get(sentence.size()).get(0) == null)
+            return new Tree<>("ROOT", Collections.singletonList(new Tree<>("JUNK")));
+
         Tree<String> annotatedBestParse = createCKYParsedTree(sentence, 0, false, 0, sentence.size());
         return TreeMarkovAnnotation.unAnnotateTree(annotatedBestParse);
     }
@@ -106,13 +112,13 @@ public class CKYNaiveParser implements Parser
         System.out.println("Binary rules are: \n");
         System.out.println(binaryRules);
     }
-    public void debugScoreTablesToConsole(ArrayList<ArrayList<HashMap<Integer, Double>>> score){
+    public void debugScoreTablesToConsole(ArrayList<ArrayList<LinkedHashMap<Integer, Double>>> score){
         System.out.println("SCORE Table");
         int c=0;
-        for (List<HashMap<Integer, Double>>  listScoreMap: score) {
+        for (List<LinkedHashMap<Integer, Double>>  listScoreMap: score) {
             System.out.println("*** Level " + c++);
             int cc = 0;
-            for (HashMap<Integer, Double> scoreMap : listScoreMap)
+            for (LinkedHashMap<Integer, Double> scoreMap : listScoreMap)
                 System.out.println("=== Sublevel =" + cc++  + "==="  + scoreMap);
         }
         System.out.println();
@@ -120,19 +126,19 @@ public class CKYNaiveParser implements Parser
     public void debugBackPointerTablesToConsole() {
         System.out.println("Unary Back Pointer Table:");
         int c=0;
-        for (List<HashMap<Integer, Integer>> listUnaryBackPtr: uniBackPointer) {
+        for (List<LinkedHashMap<Integer, Integer>> listUnaryBackPtr: uniBackPointer) {
             System.out.println("*** Level " + c++);
             int cc = 0;
-            for (HashMap<Integer, Integer> unaryBackPtr : listUnaryBackPtr)
+            for (LinkedHashMap<Integer, Integer> unaryBackPtr : listUnaryBackPtr)
                 System.out.println("=== Sublevel =" + cc++  + "===" + unaryBackPtr);
         }
         System.out.println();
         System.out.println("Binary Back Pointer Table:");
         c=0;
-        for (List<HashMap<Integer, Triple>> listBinaryBackPtr: biBackPointer) {
+        for (List<LinkedHashMap<Integer, Triple>> listBinaryBackPtr: biBackPointer) {
             System.out.println("*** Level " + c++);
             int cc = 0;
-            for (HashMap<Integer, Triple> binaryBackPtr : listBinaryBackPtr)
+            for (LinkedHashMap<Integer, Triple> binaryBackPtr : listBinaryBackPtr)
                 System.out.println("=== Sublevel =" + cc++  + "===" + binaryBackPtr);
         }
         System.out.println();
@@ -149,27 +155,30 @@ public class CKYNaiveParser implements Parser
     public Lexicon getLexicon() {
         return lexicon;
     }
+    public UnaryClosure getUnaryClosure() {
+        return unaryClosure;
+    }
     public Grammar getGrammar() {
         return grammar;
     }
 
-    public static ArrayList<ArrayList<HashMap<Integer, Double>>> getUnaryScore() {
+    public static ArrayList<ArrayList<LinkedHashMap<Integer, Double>>> getUnaryScore() {
         return unaryScore;
     }
 
-    public static ArrayList<ArrayList<HashMap<Integer, Double>>> getBinaryScore() {
+    public static ArrayList<ArrayList<LinkedHashMap<Integer, Double>>> getBinaryScore() {
         return binaryScore;
     }
 
-    public static ArrayList<ArrayList<HashMap<Integer, Double>>> getScore() {
+    public static ArrayList<ArrayList<LinkedHashMap<Integer, Double>>> getScore() {
         return score;
     }
 
-    public static ArrayList<ArrayList<HashMap<Integer, Integer>>> getUniBackPointer() {
+    public static ArrayList<ArrayList<LinkedHashMap<Integer, Integer>>> getUniBackPointer() {
         return uniBackPointer;
     }
 
-    public static ArrayList<ArrayList<HashMap<Integer, Triple>>> getBiBackPointer() {
+    public static ArrayList<ArrayList<LinkedHashMap<Integer, Triple>>> getBiBackPointer() {
         return biBackPointer;
     }
 
@@ -188,19 +197,19 @@ public class CKYNaiveParser implements Parser
         int n = sentence.size();
 
         for (int i=0; i<n+1; i++) {
-            ArrayList<HashMap<Integer, Double>> scoreList = new ArrayList<>();
-            ArrayList<HashMap<Integer, Double>> unaryScoreList = new ArrayList<>();
-            ArrayList<HashMap<Integer, Double>> binaryScoreList = new ArrayList<>();
-            ArrayList<HashMap<Integer, Integer>> uniList = new ArrayList<>();
-            ArrayList<HashMap<Integer, Triple>> biList = new ArrayList<>();
+            ArrayList<LinkedHashMap<Integer, Double>> scoreList = new ArrayList<>();
+            ArrayList<LinkedHashMap<Integer, Double>> unaryScoreList = new ArrayList<>();
+            ArrayList<LinkedHashMap<Integer, Double>> binaryScoreList = new ArrayList<>();
+            ArrayList<LinkedHashMap<Integer, Integer>> uniList = new ArrayList<>();
+            ArrayList<LinkedHashMap<Integer, Triple>> biList = new ArrayList<>();
 
             for (int j = 0; j < n + 1; j++) {
-                HashMap<Integer, Double> scoreMap = new HashMap<>();
-                HashMap<Integer, Double> unaryScoreMap = new HashMap<>();
-                HashMap<Integer, Double> binaryScoreMap = new HashMap<>();
-                HashMap<Integer, Integer> uniBackPtrMap = new HashMap<>();
-                HashMap<Integer, Triple> biBackPtrMap = new HashMap<>();
-                // build n ArrayList of HashMap\
+                LinkedHashMap<Integer, Double> scoreMap = new LinkedHashMap<>();
+                LinkedHashMap<Integer, Double> unaryScoreMap = new LinkedHashMap<>();
+                LinkedHashMap<Integer, Double> binaryScoreMap = new LinkedHashMap<>();
+                LinkedHashMap<Integer, Integer> uniBackPtrMap = new LinkedHashMap<>();
+                LinkedHashMap<Integer, Triple> biBackPtrMap = new LinkedHashMap<>();
+                // build n ArrayList of LinkedHashMap\
                 scoreList.add(scoreMap);
                 unaryScoreList.add(unaryScoreMap);
                 binaryScoreList.add(binaryScoreMap);
@@ -240,28 +249,42 @@ public class CKYNaiveParser implements Parser
         Indexer<String> labelIndexer = grammar.getLabelIndexer();
         int n = sentence.size();
 
-        for (int i = 0; i < sentence.size(); i++) {
+        for (int i = 0; i < n; i++) {
 //            System.out.println("--BASE CASE---");
-//            int i = sentence.indexOf(w); // stupidity here !!!
-            // process all pre-terminals
-            for (String tag: lexicon.getAllTags()) {
-                // check whether A -> s is in lexicon
-                if (lexicon.getLexicon().getCount(sentence.get(i), tag) > 0) {
-//                    System.out.format("Updating entry[%d][%d] with k = %d, v=%.2f\n", i, i+1, labelIndexer.indexOf(tag), lexicon.scoreTagging(sentence.get(i), tag));
-//                    unaryScore.get(i).get(i+1).put(labelIndexer.indexOf(tag), lexicon.scoreTagging(sentence.get(i), tag));
-                    score.get(i).get(i+1).put(labelIndexer.indexOf(tag), lexicon.scoreTagging(sentence.get(i), tag));
+//             process all pre-terminals
+            for (int tag = 0; tag < numNonTerminals; tag++) {
+                double tagScore = lexicon.scoreTagging(sentence.get(i), labelIndexer.get(tag));
+//                System.out.println("Tag score is " + tagScore + " not isNan?= " + Double.isNaN(tagScore));
+//                if ( (! Double.isNaN(tagScore)) & (tagScore != Double.NEGATIVE_INFINITY) ) {
+                if (Double.isFinite(tagScore)) {
+//                    System.out.println("    Updating tagscore= " + tagScore + " for tag " + labelIndexer.get(tag));
+                    unaryScore.get(i).get(i + 1).put(tag, tagScore);
                 }
             }
+//            for (String tag: lexicon.getAllTags()) {
+//                // check whether A -> s is in lexicon
+//                if (lexicon.getLexicon().getCount(sentence.get(i), tag) > 0) {
+////                    System.out.format("Updating entry[%d][%d] with k = %d, v=%.2f\n", i, i+1, labelIndexer.indexOf(tag), lexicon.scoreTagging(sentence.get(i), tag));
+//                    unaryScore.get(i).get(i+1).put(labelIndexer.indexOf(tag), lexicon.scoreTagging(sentence.get(i), tag));
+////                    score.get(i).get(i+1).put(labelIndexer.indexOf(tag), lexicon.scoreTagging(sentence.get(i), tag));
+//                }
+//            }
+        }
 
+        for (int i = 0; i < n; i++) {
             // get unary score and back pointer tables for processing extended unaries
-            HashMap<Integer, Double> scoreMap = score.get(i).get(i+1);
-//            HashMap<Integer, Double> unaryScoreMap = unaryScore.get(i).get(i+1);
-            HashMap<Integer, Integer> unaryBackPtrMap = uniBackPointer.get(i).get(i+1);
+//            LinkedHashMap<Integer, Double> scoreMap = score.get(i).get(i+1);
+
 
             // handle unaries
-            handleUnaries(i, i+1, scoreMap, unaryBackPtrMap);
-//            handleUnaries(i, i+1, unaryScoreMap, unaryBackPtrMap);
+//            handleUnaries(i, i + 1, scoreMap, unaryBackPtrMap);
+            handleUnaries(i);
         }
+
+//        System.out.println("Debuging unary score ...");
+//        debugScoreTablesToConsole(unaryScore);
+//        System.out.println("And back pointer ...");
+//        debugBackPointerTablesToConsole();
 
         // MAIN PROCESSING
         // Alternating between binaries and unaries
@@ -269,20 +292,20 @@ public class CKYNaiveParser implements Parser
             for (int begin = 0; begin <= (n - span); begin++) {
                 int end = begin + span;
                 //handle unaries
-                HashMap<Integer, Double> scoreMap = score.get(begin).get(end);
-                HashMap<Integer, Double> unaryScoreMap = unaryScore.get(begin).get(end);
-//                HashMap<Integer, Double> binaryScoreMap = binaryScore.get(begin).get(end);
-                HashMap<Integer, Integer> uniBackPtrMap = uniBackPointer.get(begin).get(end);
+                LinkedHashMap<Integer, Double> binaryScoreMap = binaryScore.get(begin).get(end);
 
                 for (int split= begin + 1; split <= end - 1; split++) {
                     //handles binary
 //                    System.out.println("***\n\n\nBINARY CASE***");
 //                    System.out.println("\n##### AT SPLIT = " + split + " of [" + begin + "," + end + "] #####");
 
-                    HashMap<Integer, Double> leftBinaryScores = score.get(begin).get(split);
-                    HashMap<Integer, Double> rightBinaryScores = score.get(split).get(end);
-//                    HashMap<Integer, Double> leftBinaryScores = unaryScore.get(begin).get(split);
-//                    HashMap<Integer, Double> rightBinaryScores = unaryScore.get(split).get(end);
+//                    LinkedHashMap<Integer, Double> leftBinaryScores = score.get(begin).get(split);
+//                    LinkedHashMap<Integer, Double> rightBinaryScores = score.get(split).get(end);
+                    LinkedHashMap<Integer, Double> leftBinaryScores = unaryScore.get(begin).get(split);
+                    LinkedHashMap<Integer, Double> rightBinaryScores = unaryScore.get(split).get(end);
+
+//                    System.out.format("At split %d of [%d][%d], the keyset for left tables are\n", split, begin, end);
+//                    printKeysetOfLinkedHashMap(leftBinaryScores);
 
                     for (Integer B: leftBinaryScores.keySet()) {
                         for (BinaryRule AtoBC: grammar.getBinaryRulesByLeftChild(B)) {
@@ -295,16 +318,15 @@ public class CKYNaiveParser implements Parser
 
                             // check whether right child's score exists
                             if (! rightBinaryScores.containsKey(C)) {
+//                                System.out.println("Right child " + C + " not valid");
                                 continue;
                             }
 
                             double prob = leftBinaryScores.get(B) + rightBinaryScores.get(C) + AtoBC.getScore();
-                            HashMap<Integer, Double> binaryScoreMap = score.get(begin).get(end);
                             if ( !(binaryScoreMap.containsKey(A)) || (prob > binaryScoreMap.get(A)) ) {
 //                                DEBUG
 //                                System.out.println(" A->BC rule: " + AtoBC + "(" + labelIndexer.get(A)
-//                                        + " -> "
-// + labelIndexer.get(AtoBC.getLeftChild()) + "-" +
+//                                        + " -> " + labelIndexer.get(AtoBC.getLeftChild()) + "-" +
 //                                        labelIndexer.get(AtoBC.getRightChild()) + "), p=" + AtoBC.getScore());
 
                                 // update score and back pointer
@@ -317,10 +339,10 @@ public class CKYNaiveParser implements Parser
                             }
                         }
                     }
-//                System.out.println("***\nUNARY CASE***");
-                    handleUnaries(begin, end, scoreMap, uniBackPtrMap);
-//                    handleUnaries(begin, end, unaryScoreMap, uniBackPtrMap);
+
                 }
+                // Done A -> BC now check whether D -> A
+                handleUnariesForBinary(begin, end, binaryScoreMap);
             }
         }
     }
@@ -331,22 +353,23 @@ public class CKYNaiveParser implements Parser
      * Handle Unary Case in CKY
      * TODO: switch back to private after debugging
      * TODO: check whether need to check base case:  end = start + 1
-     * @param begin index
-     * @param end index
+     * @param i index
      */
-    public void handleUnaries(int begin, int end, HashMap<Integer, Double> unaryScoreMap, HashMap<Integer, Integer> unaryBackPtrMap) {
+    public void handleUnaries(int i) {
 //        System.out.println("--Handling Unaries...");
+        LinkedHashMap<Integer, Double> unaryScoreMap = unaryScore.get(i).get(i+1);
+        LinkedHashMap<Integer, Integer> unaryBackPtrMap = uniBackPointer.get(i).get(i+1);
+
 //        Indexer<String> labelIndexer = grammar.getLabelIndexer();
 
 //        System.out.println("UnaryScoreMap is: " + unaryScoreMap);
 //        System.out.println("UnaryBackPtrMap is " + unaryBackPtrMap);
 
-        boolean added = true;
-        while (added) {
-            added = false;
+//        boolean added = true;
+//        while (added) {
+//            added = false;
 //            System.out.println("----------Processing this key set: " + unaryScoreMap.keySet());
-            // TODO: scan only valid tags B: IMPORTANT
-            Set<Integer> keySet = new HashSet<>(unaryScoreMap.keySet()); // deep copy to avoid exception
+            Set<Integer> keySet = new LinkedHashSet<>(unaryScoreMap.keySet()); // deep copy to avoid exception
             for (int B: keySet) {
                 // get all A s.t. A -> B is a unary closure rule
                 for (UnaryRule AtoB: unaryClosure.getClosedUnaryRulesByChild(B)) {
@@ -360,16 +383,64 @@ public class CKYNaiveParser implements Parser
 //                                "(" + labelIndexer.get(AtoB.getParent()) + " => " +
 //                                labelIndexer.get(AtoB.getChild()) + "), p=" + AtoB.getScore());
                         unaryScoreMap.put(A, prob);
-//                        System.out.println("    ----------(Handle)Updating UNIscores entry [" + begin + "][" + end + "] " +
+//                        System.out.println("    ----------(Handle)Updating UNIscores entry [" + i + "][" + (i+1) + "] " +
 //                                "with k=" + A + " v=" + prob);
-                        uniBackPointer.get(begin).get(end).put(A, B);
-//                        System.out.println("    ----------Updating UNI Backpointer entry [" + begin + "][" + end + "] " +
+                        unaryBackPtrMap.put(A, B);
+//                        System.out.println("    ----------Updating UNI Backpointer entry [" + i + "][" + (i+1) + "] " +
 //                                "with k=" + A + " v=" + B);
-                        added = true;
+//                        added = true;
                     }
                 }
             }
+//        }
+//        unaryScore.get(begin).set(end, unaryScoreMap);
+    }
+
+    public void handleUnariesForBinary(int begin, int end, LinkedHashMap<Integer, Double> binaryScoreMap) {
+//        System.out.format("--Handling Unaries for BINARY CASE for begin = %d, end = %d...\n", begin, end);
+        Indexer<String> labelIndexer = grammar.getLabelIndexer();
+
+//        System.out.println("UnaryScoreMap is: " + unaryScoreMap);
+//        System.out.println("UnaryBackPtrMap is " + unaryBackPtrMap);
+
+//        boolean added = true;
+//        while (added) {
+//            added = false;
+//            System.out.println("----------Processing this key set: " + unaryScoreMap.keySet());
+        LinkedHashMap<Integer, Double> unaryScoreMap = unaryScore.get(begin).get(end);
+//        LinkedHashMap<Integer, Double> binaryScoreMap = binaryScore.get(begin).get(end);
+        LinkedHashMap<Integer, Integer> unaryBackPtrMap = uniBackPointer.get(begin).get(end);
+
+
+        // TODO: scan only valid tags B: IMPORTANT
+        Set<Integer> keySet = new LinkedHashSet<>(binaryScoreMap.keySet()); // deep copy to avoid exception
+//        System.out.println(">>>>>>Key set of Binary score map is " + keySet);
+//        printKeysetOfLinkedHashMap(unaryScoreMap);
+
+        for (int B: keySet) {
+            // get all A s.t. A -> B is a unary closure rule
+            for (UnaryRule AtoB: unaryClosure.getClosedUnaryRulesByChild(B)) {
+//                System.out.format("----------------Evaluating %s with p=%.2f\n", AtoB, AtoB.getScore());
+                double p_A_to_B = AtoB.getScore();
+                double prob = p_A_to_B + binaryScoreMap.get(B);
+                int A = AtoB.getParent();
+                if ( (! unaryScoreMap.containsKey(A)) || (prob > unaryScoreMap.get(A)) ) {
+                    // DEBUG
+//                        System.out.println(" A->B unary closure rule: " + AtoB +
+//                                "(" + labelIndexer.get(AtoB.getParent()) + " => " +
+//                                labelIndexer.get(AtoB.getChild()) + "), p=" + AtoB.getScore());
+                    unaryScoreMap.put(A, prob);
+//                        System.out.println("    ----------(Handle)Updating UNIscores entry [" + begin + "][" + end + "] " +
+//                                "with k=" + A + " v=" + prob);
+                    unaryBackPtrMap.put(A, B);
+//                        System.out.println("    ----------Updating UNI Backpointer entry [" + begin + "][" + end + "] " +
+//                                "with k=" + A + " v=" + B);
+//                        added = true;
+                }
+            }
         }
+//        }
+//        unaryScore.get(begin).set(end, unaryScoreMap);
     }
 
     /**
@@ -392,6 +463,19 @@ public class CKYNaiveParser implements Parser
                 int tag = uniBackPointer.get(start).get(end).get(parent);
                 Tree<String> tagToWordTree = new Tree<>(labelIndexer.get(tag),
                         Arrays.asList(new Tree<>(sentence.get(start))));
+
+                // expansion of unary rule
+                UnaryRule unaryRule = new UnaryRule(parent, tag);
+                List<Integer> path = unaryClosure.getPath(unaryRule);
+                if (path.size() > 2) {
+                    System.out.println("Path bigger than 2 ");
+                    for (int i = 1; i < path.size() -1 ; i++) {
+                        Tree<String> tmpTree = new Tree<>(labelIndexer.get(path.get(i)), Arrays.asList(tagToWordTree));
+                        tagToWordTree = tmpTree;
+                    }
+                }
+
+                // look for possible parents
                 return new Tree<>(labelIndexer.get(parent), Arrays.asList(tagToWordTree));
             }
         }
@@ -400,26 +484,42 @@ public class CKYNaiveParser implements Parser
         // unary
         if (! isBinaryTurn) {
 //            System.out.println("Unary case with start=" + start + " and end=" + end + " and parent=" + parent);
-            Tree<String> unaryTree = null;
+            Tree<String> unaryTree;
             // TODO: evaluating this whether true or not
-            if (!uniBackPointer.get(start).get(end).containsKey(parent))
-                unaryTree = createCKYParsedTree(sentence, parent, true, start, end);
+            if (!uniBackPointer.get(start).get(end).containsKey(parent)) {
+                masterTree = createCKYParsedTree(sentence, parent, true, start, end);
+            }
             else {
                 // get the back point of parent
                 int child = uniBackPointer.get(start).get(end).get(parent);
-                unaryTree = createCKYParsedTree(sentence, child, true, start, end);
+                // handle reflexive rule
+                if (child == parent) {
+                    masterTree = createCKYParsedTree(sentence, parent, true, start, end);
+                } else {
+                    // expansion of unary rule
+                    UnaryRule unaryRule = new UnaryRule(parent, child);
+                    List<Integer> path = unaryClosure.getPath(unaryRule);
+                    unaryTree = createCKYParsedTree(sentence, child, true, start, end);
+                    if (path.size() > 2) {
+                        System.out.println("Path bigger than 2 ");
+                        for (int i = 1; i < path.size() - 1; i++) {
+                            Tree<String> tmpTree = new Tree<>(labelIndexer.get(path.get(i)), Arrays.asList(unaryTree));
+                            unaryTree = tmpTree;
+                        }
+                    }
+                    masterTree.setChildren(Arrays.asList(unaryTree));
+                }
+
             }
-            masterTree.setChildren(Arrays.asList(unaryTree));
+//
         }
         else {
         // binary
 //            System.out.println("Binary case with start=" + start + " and end=" + end + " and parent=" + parent);
             Triple<Integer, Integer, Integer> triple = biBackPointer.get(start).get(end).get(parent);
-
             // failed to parse, return a random tree
-            if (triple == null)
-                return new Tree<>("ROOT", Collections.singletonList(new Tree<>("JUNK")));
-
+//            if (triple == null)
+//                return new Tree<>("ROOT", Collections.singletonList(new Tree<>("JUNK")));
             int leftChild = triple.begin;
             int rightChild = triple.end;
             int split = triple.split;
@@ -430,5 +530,11 @@ public class CKYNaiveParser implements Parser
         }
 
         return masterTree;
+    }
+
+    void printKeysetOfLinkedHashMap(LinkedHashMap<Integer, Double> map) {
+        for (Integer k: map.keySet()) {
+            System.out.println("\n\n\nk= " + k + " v= " + map.get(k));
+        }
     }
 }
