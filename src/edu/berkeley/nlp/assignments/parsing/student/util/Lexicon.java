@@ -11,7 +11,6 @@ import java.util.Set;
 /**
  * Simple default implementation of a lexicon, which scores word, tag pairs with
  * a smoothed estimate of P(tag|word)/P(tag). (tag here is pre-terminals)
- * @author Gorilla
  * @author Dan Klein
  */
 public class Lexicon {

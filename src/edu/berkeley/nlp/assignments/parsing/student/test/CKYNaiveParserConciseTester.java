@@ -1,12 +1,9 @@
 package edu.berkeley.nlp.assignments.parsing.student.test;
 
 
-import edu.berkeley.nlp.assignments.parsing.BaselineParser;
 import edu.berkeley.nlp.assignments.parsing.Parser;
-import edu.berkeley.nlp.assignments.parsing.ParserFactory;
-import edu.berkeley.nlp.assignments.parsing.student.CKYNaiveParser;
-import edu.berkeley.nlp.assignments.parsing.student.CoarseToFineParserFactory;
-import edu.berkeley.nlp.assignments.parsing.student.GenerativeParserFactory;
+import edu.berkeley.nlp.assignments.parsing.UnaryRule;
+import edu.berkeley.nlp.assignments.parsing.student.*;
 import edu.berkeley.nlp.assignments.parsing.student.util.Grammar;
 import edu.berkeley.nlp.assignments.parsing.student.util.Lexicon;
 import edu.berkeley.nlp.io.PennTreebankReader;
@@ -41,7 +38,13 @@ public class CKYNaiveParserConciseTester
 //        int start = 219;
 //        int end = 219;
         int start = 200;
-        int end = 202;
+        int end = 205;
+
+        System.out.println("Doing something with HandleUnaries...");
+        List<String> smallSentence = new ArrayList<>(Arrays.asList("Ms.", "Haag", "plays", "Elianti", "."));
+//        List<String> smallSentence = new ArrayList<>(Arrays.asList("Tuesday", ",", "October", "31", ",", "1989"));
+        System.out.println("Small sentence as a list of string " + smallSentence);
+
 
         // Update defaults using command line specifications
         if (argMap.containsKey("-path")) {
@@ -58,8 +61,6 @@ public class CKYNaiveParserConciseTester
         }
         System.out.println("Maximum length for test sentences: " + maxTestLength);
 
-
-
         System.out.print("Loading training trees  ... ");
         List<Tree<String>> trainTrees = readTrees(basePath, start, end, maxTrainLength);
         System.out.println("done. (" + trainTrees.size() + " trees)");
@@ -72,25 +73,30 @@ public class CKYNaiveParserConciseTester
         CKYNaiveParser parser = new CKYNaiveParser(trainTrees);
         grammar = parser.getGrammar();
         lexicon = parser.getLexicon();
-
-        System.out.println("Doing something with HandleUnaries...");
-        List<String> smallSentence = new ArrayList<>(Arrays.asList("Ms.", "Haag", "plays", "Elianti", "."));
-//        List<String> smallSentence = new ArrayList<>(Arrays.asList("Tuesday", ",", "October", "31", ",", "1989"));
-        System.out.println("Small sentence as a list of string " + smallSentence);
-
-        // debug lexicon and grammar
-        parser.debugGrammarToConsole();
-        parser.debugLexiconToConsole();
-
-//        parser.handleUnaries(1, 3);
-        parser.cky(smallSentence);
-        parser.debugScoreTablesToConsole(parser.getScore());
+//        parser.debugLexiconToConsole();
+//        parser.getBestParse(smallSentence);
+//        parser.cky(smallSentence);
+//        parser.debugScoreTablesToConsole(parser.getScore());
 //        parser.debugScoreTablesToConsole(parser.getUnaryScore());
 //        parser.debugScoreTablesToConsole(parser.getBinaryScore());
-        parser.debugBackPointerTablesToConsole();
+//        parser.debugBackPointerTablesToConsole();
+//        Tree<String> annotatedBestParse = parser.createCKYParsedTree(smallSentence, 0, false, 0, smallSentence.size());
+
+
+//        PCFGParser parser = new PCFGParser();
+//        parser.train(trainTrees);
+//        Tree<String> t = parser.getBestParse(smallSentence);
+//        System.out.println(Trees.PennTreeRenderer.render(t));
+//
+//        parser.debugScore();
+//        parser.debugBack();
+
 
         System.out.println("\n\n\n\n\nEVALUATING PARSER NOW ...");
         testParser(parser, testTrees, true);
+
+//        System.out.println(parser.getUnaryClosure().getPath(new UnaryRule(2, 3)));
+
     }
 
     private static void testParser(Parser parser, List<Tree<String>> testTrees, boolean verbose) {

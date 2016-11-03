@@ -1,6 +1,7 @@
 package edu.berkeley.nlp.assignments.parsing.student.util;
 
 /**
+ * Helper class to score the binary back pointer in CKY parsing score table
  * Created by Gorilla on 10/19/2016.
  */
 public class Triple<T1, T2, T3> {

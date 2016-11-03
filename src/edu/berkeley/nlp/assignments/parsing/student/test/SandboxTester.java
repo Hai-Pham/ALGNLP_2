@@ -3,6 +3,7 @@ package edu.berkeley.nlp.assignments.parsing.student.test;
 import edu.berkeley.nlp.assignments.parsing.student.util.Triple;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -69,6 +70,10 @@ public class SandboxTester {
 
         System.out.println(back);
 //        System.out.println(back.get(3)); // Exception
+
+        ArrayList<Integer> l = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
+        for (int i = 1; i < l.size() -1 ; i++)
+            System.out.println(l.get(i));
     }
 
 

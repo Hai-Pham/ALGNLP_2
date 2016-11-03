@@ -110,12 +110,12 @@ public class CKYNaiveParserTester
         }
 
         int trainTreesEnd = 2199;
-
         if (sanity) {
             maxTrainLength = 3;
             maxTestLength = 3;
             trainTreesEnd = 299;
         }
+
         System.out.print("Loading training trees (sections 2-21) ... ");
         List<Tree<String>> trainTrees = readTrees(basePath, 200, trainTreesEnd, maxTrainLength);
         System.out.println("done. (" + trainTrees.size() + " trees)");
@@ -134,15 +134,16 @@ public class CKYNaiveParserTester
         lexicon = parser.getLexicon();
 
         System.out.println("Doing something with HandleUnaries...");
-        List<String> smallSentence = new ArrayList<>(Arrays.asList("Ms.", "Haag", "plays", "Elianti", "."));
+        List<String> smallSentence = new ArrayList<>(Arrays.asList("First", ",", "there", "was", "a", "death", "watch", "."));
         System.out.println("Small sentence as a list of string " + smallSentence);
 
         // debug lexicon and grammar
-        parser.debugGrammarToConsole();
-        parser.debugLexiconToConsole();
+//        parser.debugGrammarToConsole();
+//        parser.debugLexiconToConsole();
 
 //        parser.cky(smallSentence);
-        testParser(parser, testTrees, false);
+        parser.getBestParse(smallSentence);
+//        testParser(parser, testTrees, false);
 
     }
 
